@@ -21,7 +21,6 @@ class createSettingsDto {
 }
 
 export class CreateUserDto {
-  id: number | string;
   @IsString()
   @IsNotEmpty()
   name: string;

@@ -1,10 +1,12 @@
 import { IsNotEmpty, IsString } from 'class-validator';
 
-export class CreatePostDto {
-  title: string;
+export class CreateProductDto {
   @IsString()
   @IsNotEmpty()
-  content: string;
+  name: string;
+  @IsString()
+  @IsNotEmpty()
+  description: string;
   @IsString()
   @IsNotEmpty()
   userId: string;

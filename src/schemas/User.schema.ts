@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose from 'mongoose';
 import { UserSettings } from './UserSettings.schema';
 import { Post } from './Post.Schema';
+import { Product } from './Product.Schema';
 
 @Schema({ timestamps: true }) // Enable timestamps
 export class User {
@@ -24,6 +25,15 @@ export class User {
     ],
   })
   posts: Post[];
+  @Prop({
+    type: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Product',
+      },
+    ],
+  })
+  products: Product[];
 
   // The `timestamps: true` option automatically adds these fields:
   // createdAt: Date;

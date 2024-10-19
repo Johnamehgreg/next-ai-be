@@ -38,10 +38,10 @@ export class UsersService {
       //   throw new NotFoundException(`Role ${role} not found`);
       // return roleList;
     }
-    return this.userModel.find().populate(['settings', 'posts']);
+    return this.userModel.find().populate(['settings', 'posts', 'products']);
   }
   findOne(id: string) {
-    return this.userModel.findById(id).populate(['settings', 'posts']);
+    return this.userModel.findById(id).populate(['settings', 'posts', 'products']);
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {

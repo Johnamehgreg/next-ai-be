@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  ValidationPipe,
 } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -16,7 +17,7 @@ export class PostsController {
   constructor(private readonly postsService: PostsService) { }
 
   @Post()
-  create(@Body() createPostDto: CreatePostDto) {
+  create(@Body(ValidationPipe) createPostDto: CreatePostDto) {
     console.log(createPostDto);
     return this.postsService.create(createPostDto);
   }

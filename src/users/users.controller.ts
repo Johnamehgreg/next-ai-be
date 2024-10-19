@@ -11,7 +11,7 @@ import {
     ValidationPipe, HttpException,
     HttpStatus
 } from '@nestjs/common';
-import { UsersService, User } from './users.service';
+import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { checkIdIsValid } from 'src/helper';
@@ -23,8 +23,12 @@ export class UsersController {
     // Add user-related endpoints here
     constructor(private readonly usersService: UsersService) { };
 
+    @Post()
+    create(@Body(ValidationPipe) createUserDto: CreateUserDto,) {
+        return this.usersService.create(createUserDto);
+    }
     @Get()
-    findAll(@Query('role') role?: User['role']) {
+    findAll(@Query('role') role?: string) {
         return this.usersService.findAll(role);
     }
     @Get(':id') // Get single user
@@ -34,10 +38,7 @@ export class UsersController {
         if (!findUser) throw new HttpException('User not found', HttpStatus.NOT_FOUND)
         return this.usersService.findOne(id);
     }
-    @Post()
-    create(@Body(ValidationPipe) createUserDto: CreateUserDto,) {
-        return this.usersService.create(createUserDto);
-    }
+
     // @Patch(':id')
     // updateSingleField(@Param('id') id: string) {
     //     return { id, name: 'John Doe' };

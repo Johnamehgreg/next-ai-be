@@ -10,11 +10,16 @@ import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { User } from 'src/users/schemas/User.schema';
+import { v4 as uuidv4 } from 'uuid';
+import { RefreshToken } from './schemas/RefreshToken.Schema';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
+    @InjectModel(RefreshToken.name)
+    private RefreshTokenModel: Model<RefreshToken>,
     private jwtService: JwtService,
   ) { }
 
@@ -41,21 +46,53 @@ export class AuthService {
       user.password,
     );
     if (!passwordMatch) throw new UnauthorizedException('Invalid login');
-    const payload = { sub: user._id, email: user.email, role: user.role };
     return {
       user_id: user._id,
       email: user.email,
       role: user.role,
       iat: new Date().getTime(), // Current time
-      access_token: await this.generateUserToken(payload),
+      accessToken: (await this.generateUserToken(user?._id)).accessToken,
+      refreshToken: (await this.generateUserToken(user?._id)).refreshToken,
     };
   }
 
-  async generateUserToken(payload) {
-    const accessToken = this.jwtService.sign(
-      { ...payload },
-      { expiresIn: '1h' },
+  async refreshToken(refreshTokenDto: RefreshTokenDto) {
+    const token = await this.RefreshTokenModel.findOne({
+      token: refreshTokenDto.token,
+      expiryDate: { $gte: new Date() },
+    });
+    if (!token) throw new UnauthorizedException('token is invalid');
+    return this.generateUserToken(token.userId);
+  }
+
+  async generateUserToken(userId) {
+    const accessToken = this.jwtService.sign({ userId }, { expiresIn: '1h' });
+    const refreshToken = uuidv4();
+    await this.storeRefreshToken(refreshToken, userId);
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  async storeRefreshToken(token: string, userId: string) {
+    // calculate for three days
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + 3);
+    await this.RefreshTokenModel.updateOne(
+      { userId },
+      {
+        $set: { token, expiryDate },
+      },
+      {
+        upsert: true,
+      },
     );
-    return accessToken;
+    const newRefreshToken = new this.RefreshTokenModel({
+      token,
+      userId, // replace with actual user id
+      expiryDate,
+    });
+    return newRefreshToken;
   }
 }

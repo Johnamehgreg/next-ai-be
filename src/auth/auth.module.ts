@@ -7,6 +7,10 @@ import {
   UserSettings,
   userSettingsSchema,
 } from 'src/users/schemas/UserSettings.schema';
+import {
+  RefreshToken,
+  RefreshTokenSchema,
+} from './schemas/RefreshToken.Schema';
 
 @Module({
   imports: [
@@ -18,6 +22,10 @@ import {
       {
         name: UserSettings.name,
         schema: userSettingsSchema,
+      },
+      {
+        name: RefreshToken.name,
+        schema: RefreshTokenSchema,
       },
     ]),
   ],

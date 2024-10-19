@@ -21,7 +21,7 @@ export class PostsService {
     const savePost = await newPost.save();
     await findUser.updateOne({
       $push: {
-        post: savePost._id,
+        posts: savePost._id,
       },
     });
     return savePost;

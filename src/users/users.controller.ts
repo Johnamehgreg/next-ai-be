@@ -2,9 +2,7 @@
 import {
     Controller,
     Get,
-    Param,
-    Post,
-    Body,
+    Param, Body,
     Put,
     Delete,
     Query,
@@ -13,7 +11,6 @@ import {
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { CreateUserDto } from './dto/create-user.dto';
 import { checkIdIsValid } from 'src/helper';
 
 
@@ -22,11 +19,6 @@ import { checkIdIsValid } from 'src/helper';
 export class UsersController {
     // Add user-related endpoints here
     constructor(private readonly usersService: UsersService) { };
-
-    @Post()
-    create(@Body(ValidationPipe) createUserDto: CreateUserDto,) {
-        return this.usersService.create(createUserDto);
-    }
     @Get()
     findAll(@Query('role') role?: string) {
         return this.usersService.findAll(role);

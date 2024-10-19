@@ -3,8 +3,8 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { User } from 'src/schemas/User.schema';
-import { Post } from 'src/schemas/Post.Schema';
+import { Post } from './schemas/Post.Schema';
+import { User } from 'src/users/schemas/User.schema';
 
 @Injectable()
 export class PostsService {

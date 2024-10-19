@@ -1,0 +1,43 @@
+{
+  "editor.formatOnSave": true,
+  "editor.minimap.enabled": true,
+  //  "workbench"
+  // set open tabs limit
+  "editor.lineHeight": 35,
+  "editor.tabSize": 2,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit",
+    "source.organizeImports": "never",
+    "source.removeUnusedImports": "explicit",
+    "source.removeUnusedDeclarations": "explicit",
+    "source.removeUnusedDestructures": "explicit"
+  },
+  "[dotenv]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
+  },
+  "cSpell.words": [
+    "ACCESSCONTROL",
+    "apexcharts",
+    "CATERINGRECONCILATION",
+    "daina",
+    "DELTABAGGAGEHALL",
+    "DELTACARGOREPORT",
+    "FAAN",
+    "hotmail",
+    "mantine",
+    "minnig",
+    "MINNINGSHEET",
+    "nprogress",
+    "POSTFLIGHT",
+    "qartar",
+    "QATARCATERING",
+    "QATARRAMP",
+    "RAMPGUARD",
+    "UNITEDBULKY",
+    "UNITEDBULKYITEM",
+    "UNITEDBULKYSELECTEE",
+    "uuidv",
+    "Westport",
+    "xaxis"
+  ]
+}

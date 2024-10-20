@@ -108,8 +108,14 @@ export class AuthService {
       expiryDate,
     });
     try {
-      this.mailService.sendPasswordResetEmail(user.email, resetToken);
-    } catch (err) { }
+      const response = await this.mailService.sendPasswordResetEmail(
+        user.email,
+        resetToken,
+      );
+      console.log(response);
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   async generateUserToken(userId) {

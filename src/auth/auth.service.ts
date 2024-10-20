@@ -1,6 +1,8 @@
 import {
   BadRequestException,
+  HttpException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -10,9 +12,13 @@ import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { User } from 'src/users/schemas/User.schema';
-import { v4 as uuidv4 } from 'uuid';
 import { RefreshToken } from './schemas/RefreshToken.Schema';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { nanoid } from 'nanoid';
+import { ResetToken } from './schemas/ResetToken.Schema';
+import { MailService } from 'src/services/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -20,7 +26,10 @@ export class AuthService {
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(RefreshToken.name)
     private RefreshTokenModel: Model<RefreshToken>,
+    @InjectModel(ResetToken.name)
+    private ResetTokenModel: Model<ResetToken>,
     private jwtService: JwtService,
+    private mailService: MailService,
   ) { }
 
   async signUp({ password, ...createUserDto }: CreateUserDto) {
@@ -37,6 +46,7 @@ export class AuthService {
   }
 
   async login(LoginDto: LoginDto) {
+    // this.mailService.sendMail();
     const user = await this.userModel.findOne({
       email: LoginDto.email,
     });
@@ -46,13 +56,12 @@ export class AuthService {
       user.password,
     );
     if (!passwordMatch) throw new UnauthorizedException('Invalid login');
+    const token = await this.generateUserToken(user?._id);
     return {
       user_id: user._id,
       email: user.email,
       role: user.role,
-      iat: new Date().getTime(), // Current time
-      accessToken: (await this.generateUserToken(user?._id)).accessToken,
-      refreshToken: (await this.generateUserToken(user?._id)).refreshToken,
+      ...token,
     };
   }
 
@@ -64,10 +73,48 @@ export class AuthService {
     if (!token) throw new UnauthorizedException('token is invalid');
     return this.generateUserToken(token.userId);
   }
+  async changePassword(changePasswordDto: ChangePasswordDto, userId: string) {
+    const user = await this.userModel.findById(userId);
+    const passwordMatch = await bcrypt.compare(
+      changePasswordDto.oldPassword,
+      user.password,
+    );
+    if (!user) throw new NotFoundException('User not found...');
+    if (!passwordMatch) throw new BadRequestException('Wrong credentials');
+    const hashPassword = await bcrypt.hash(changePasswordDto.newPassword, 10);
+    const updatePassword = await this.userModel.findByIdAndUpdate(
+      userId,
+      {
+        $set: { password: hashPassword },
+      },
+      {
+        upsert: true,
+      },
+    );
+    if (updatePassword)
+      throw new HttpException('Password update successfully', 200);
+  }
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+    const user = await this.userModel.findOne({
+      email: forgotPasswordDto.email,
+    });
+    if (!user) throw new BadRequestException('wrong credential');
+    const resetToken = nanoid(64);
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getHours() + 1);
+    await this.ResetTokenModel.create({
+      token: resetToken,
+      userId: user._id,
+      expiryDate,
+    });
+    try {
+      this.mailService.sendPasswordResetEmail(user.email, resetToken);
+    } catch (err) { }
+  }
 
   async generateUserToken(userId) {
     const accessToken = this.jwtService.sign({ userId }, { expiresIn: '1h' });
-    const refreshToken = uuidv4();
+    const refreshToken = nanoid(64);
     await this.storeRefreshToken(refreshToken, userId);
     return {
       accessToken,
@@ -88,11 +135,5 @@ export class AuthService {
         upsert: true,
       },
     );
-    const newRefreshToken = new this.RefreshTokenModel({
-      token,
-      userId, // replace with actual user id
-      expiryDate,
-    });
-    return newRefreshToken;
   }
 }

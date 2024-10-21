@@ -43,5 +43,6 @@ export class CreateUserDto {
   @Matches(/^(?=.*[0-9])/, {
     message: 'Password must contain at least one number',
   })
+  @IsNotEmpty()
   password: string;
 }

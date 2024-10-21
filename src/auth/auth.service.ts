@@ -21,11 +21,14 @@ import { nanoid } from 'nanoid';
 import { ResetToken } from './schemas/ResetToken.Schema';
 import { MailService } from 'src/services/mail.service';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { UserSettings } from 'src/users/schemas/UserSettings.schema';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectModel(User.name) private UserModel: Model<User>,
+    @InjectModel(UserSettings.name)
+    private UserSettingsModel: Model<UserSettings>,
     @InjectModel(RefreshToken.name)
     private RefreshTokenModel: Model<RefreshToken>,
     @InjectModel(ResetToken.name)
@@ -39,15 +42,19 @@ export class AuthService {
       email: createUserDto.email,
     });
     if (emailExit) throw new BadRequestException('Email already exit');
-    const newUser = new this.UserModel({
-      password: this.generateHashedPassword(password),
-      ...createUserDto,
+    const settings = await this.UserSettingsModel.create({
+      receiveNotification: true,
     });
-    return newUser.save();
+    const hashedPassword = await this.generateHashedPassword(password);
+    const newUser = new this.UserModel({
+      ...createUserDto,
+      password: hashedPassword,
+      settings: settings._id,
+    });
+    return (await newUser.save()).populate('settings');
   }
 
   async login(LoginDto: LoginDto) {
-    // this.mailService.sendMail();
     const user = await this.UserModel.findOne({
       email: LoginDto.email,
     });
@@ -82,11 +89,15 @@ export class AuthService {
     );
     if (!user) throw new NotFoundException('User not found...');
     if (!passwordMatch) throw new BadRequestException('Wrong credentials');
+    const hashedPassword = await this.generateHashedPassword(
+      changePasswordDto.newPassword,
+    );
+
     const updatePassword = await this.UserModel.findByIdAndUpdate(
       userId,
       {
         $set: {
-          password: this.generateHashedPassword(changePasswordDto.newPassword),
+          password: hashedPassword,
         },
       },
       {
@@ -117,16 +128,20 @@ export class AuthService {
   }
 
   async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    const check = await this.ResetTokenModel.find();
     const resetTokenData = await this.ResetTokenModel.findOneAndDelete({
       token: resetPasswordDto.resetToken,
-      expiryDate: { $gte: new Date() },
     });
+
     if (!resetTokenData) throw new UnauthorizedException('Invalid link');
+    const hashedPassword = await this.generateHashedPassword(
+      resetPasswordDto.newPassword,
+    );
     const user = await this.UserModel.findByIdAndUpdate(
       resetTokenData.userId,
       {
         $set: {
-          password: this.generateHashedPassword(resetPasswordDto.newPassword),
+          password: hashedPassword,
         },
       },
       {
@@ -164,8 +179,7 @@ export class AuthService {
     );
   }
 
-  async generateHashedPassword(password) {
-    const hashPassword = await bcrypt.hash(password, 10);
-    return hashPassword;
+  generateHashedPassword(password) {
+    return bcrypt.hash(password, 10);
   }
 }

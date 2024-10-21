@@ -32,12 +32,8 @@ export class User {
     ],
   })
   products: Product[];
-  @Prop()
+  @Prop({ required: true })
   password: string;
-
-  // The `timestamps: true` option automatically adds these fields:
-  // createdAt: Date;
-  // updatedAt: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

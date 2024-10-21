@@ -2,6 +2,7 @@ import {
   BadRequestException,
   HttpException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -19,11 +20,12 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { nanoid } from 'nanoid';
 import { ResetToken } from './schemas/ResetToken.Schema';
 import { MailService } from 'src/services/mail.service';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectModel(User.name) private userModel: Model<User>,
+    @InjectModel(User.name) private UserModel: Model<User>,
     @InjectModel(RefreshToken.name)
     private RefreshTokenModel: Model<RefreshToken>,
     @InjectModel(ResetToken.name)
@@ -33,13 +35,12 @@ export class AuthService {
   ) { }
 
   async signUp({ password, ...createUserDto }: CreateUserDto) {
-    const emailExit = await this.userModel.findOne({
+    const emailExit = await this.UserModel.findOne({
       email: createUserDto.email,
     });
     if (emailExit) throw new BadRequestException('Email already exit');
-    const hashPassword = await bcrypt.hash(password, 10);
-    const newUser = new this.userModel({
-      password: hashPassword,
+    const newUser = new this.UserModel({
+      password: this.generateHashedPassword(password),
       ...createUserDto,
     });
     return newUser.save();
@@ -47,7 +48,7 @@ export class AuthService {
 
   async login(LoginDto: LoginDto) {
     // this.mailService.sendMail();
-    const user = await this.userModel.findOne({
+    const user = await this.UserModel.findOne({
       email: LoginDto.email,
     });
     if (!user) throw new UnauthorizedException('Invalid login');
@@ -74,18 +75,19 @@ export class AuthService {
     return this.generateUserToken(token.userId);
   }
   async changePassword(changePasswordDto: ChangePasswordDto, userId: string) {
-    const user = await this.userModel.findById(userId);
+    const user = await this.UserModel.findById(userId);
     const passwordMatch = await bcrypt.compare(
       changePasswordDto.oldPassword,
       user.password,
     );
     if (!user) throw new NotFoundException('User not found...');
     if (!passwordMatch) throw new BadRequestException('Wrong credentials');
-    const hashPassword = await bcrypt.hash(changePasswordDto.newPassword, 10);
-    const updatePassword = await this.userModel.findByIdAndUpdate(
+    const updatePassword = await this.UserModel.findByIdAndUpdate(
       userId,
       {
-        $set: { password: hashPassword },
+        $set: {
+          password: this.generateHashedPassword(changePasswordDto.newPassword),
+        },
       },
       {
         upsert: true,
@@ -95,7 +97,7 @@ export class AuthService {
       throw new HttpException('Password update successfully', 200);
   }
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
-    const user = await this.userModel.findOne({
+    const user = await this.UserModel.findOne({
       email: forgotPasswordDto.email,
     });
     if (!user) throw new BadRequestException('wrong credential');
@@ -107,17 +109,36 @@ export class AuthService {
       userId: user._id,
       expiryDate,
     });
-    try {
-      const response = await this.mailService.sendPasswordResetEmail(
-        user.email,
-        resetToken,
-      );
-      console.log(response);
-    } catch (err) {
-      console.log(err);
-    }
+    await this.mailService.sendPasswordResetEmail(user.email, resetToken);
+    throw new HttpException(
+      `If email exit an reset link has been sent ${resetToken} `,
+      200,
+    );
   }
 
+  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    const resetTokenData = await this.ResetTokenModel.findOneAndDelete({
+      token: resetPasswordDto.resetToken,
+      expiryDate: { $gte: new Date() },
+    });
+    if (!resetTokenData) throw new UnauthorizedException('Invalid link');
+    const user = await this.UserModel.findByIdAndUpdate(
+      resetTokenData.userId,
+      {
+        $set: {
+          password: this.generateHashedPassword(resetPasswordDto.newPassword),
+        },
+      },
+      {
+        upsert: true,
+      },
+    );
+    if (!user) {
+      throw new InternalServerErrorException('Something went wrong');
+    }
+    await this.mailService.sendPasswordUpdateSuccess(user.email);
+    throw new HttpException(`Password update successful `, 200);
+  }
   async generateUserToken(userId) {
     const accessToken = this.jwtService.sign({ userId }, { expiresIn: '1h' });
     const refreshToken = nanoid(64);
@@ -141,5 +162,10 @@ export class AuthService {
         upsert: true,
       },
     );
+  }
+
+  async generateHashedPassword(password) {
+    const hashPassword = await bcrypt.hash(password, 10);
+    return hashPassword;
   }
 }

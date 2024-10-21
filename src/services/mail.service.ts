@@ -14,4 +14,13 @@ export class MailService {
     };
     this.mailService.sendMail(mailOptions);
   }
+  async sendPasswordUpdateSuccess(to: string) {
+    const mailOptions = {
+      from: 'Kingsley Okure <kingsleyokgeorge@gmail.com>',
+      to,
+      subject: 'Password Reset',
+      text: `Your password has been reset successfully `,
+    };
+    this.mailService.sendMail(mailOptions);
+  }
 }

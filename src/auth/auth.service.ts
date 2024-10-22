@@ -22,6 +22,9 @@ import { ResetToken } from './schemas/ResetToken.Schema';
 import { MailService } from 'src/services/mail.service';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UserSettings } from 'src/users/schemas/UserSettings.schema';
+import { VerifyEmailDto } from './dto/verify-email.dto';
+import { Otp } from './schemas/Otp.Schema';
+import { SendVerifyEmailDto } from './dto/send-verify-email.dto';
 
 @Injectable()
 export class AuthService {
@@ -33,6 +36,8 @@ export class AuthService {
     private RefreshTokenModel: Model<RefreshToken>,
     @InjectModel(ResetToken.name)
     private ResetTokenModel: Model<ResetToken>,
+    @InjectModel(Otp.name)
+    private OtpModel: Model<Otp>,
     private jwtService: JwtService,
     private mailService: MailService,
   ) { }
@@ -42,6 +47,11 @@ export class AuthService {
       email: createUserDto.email,
     });
     if (emailExit) throw new BadRequestException('Email already exit');
+    const check = await this.OtpModel.findOne({
+      email: createUserDto.email,
+    });
+    if (!check?.isEmailVerify)
+      throw new BadRequestException('Email is not verified');
     const settings = await this.UserSettingsModel.create({
       receiveNotification: true,
     });
@@ -51,7 +61,65 @@ export class AuthService {
       password: hashedPassword,
       settings: settings._id,
     });
-    return (await newUser.save()).populate('settings');
+    const savedUser = await (await newUser.save()).populate('settings');
+
+    // Convert to plain object and remove the password field
+    const userObject = savedUser.toObject();
+    delete userObject.password;
+
+    return { message: 'Account created successfully' };
+  }
+
+  async sendOptVerificationEmail(sendVerifyEmailDto: SendVerifyEmailDto) {
+    const otp = this.generateOtp();
+    const hashedOtp = await this.generateHashedPassword(otp);
+    const expiryDate = new Date();
+    expiryDate.setMinutes(expiryDate.getMinutes() + 15);
+    const user = await this.OtpModel.findOneAndUpdate(
+      {
+        email: sendVerifyEmailDto.email,
+      },
+      {
+        $set: {
+          otp: hashedOtp,
+          expiryDate,
+        },
+      },
+    );
+    if (user) {
+      this.mailService.sendVerificationEmail(sendVerifyEmailDto.email, otp);
+      return { message: 'Verification email sent' };
+    }
+    const newOtp = new this.OtpModel({
+      otp: hashedOtp,
+      email: sendVerifyEmailDto.email,
+      expiryDate,
+    });
+    await newOtp.save();
+    this.mailService.sendVerificationEmail(sendVerifyEmailDto.email, otp);
+    return { message: 'Verification email sent' };
+  }
+
+  async verifyEmail(verifyEmailDto: VerifyEmailDto) {
+    console.log(verifyEmailDto);
+    const exitedOtp = await this.OtpModel.findOne({
+      email: verifyEmailDto.email,
+    });
+    if (!exitedOtp) throw new BadRequestException('Invalid credentials');
+    if ((exitedOtp?.expiryDate as any) < new Date())
+      throw new BadRequestException('Code has expired, Please request again');
+    const validOtp = await bcrypt.compare(verifyEmailDto.otp, exitedOtp.otp);
+    if (!validOtp)
+      throw new BadRequestException('Invalid code passed, check your inbox');
+    await this.OtpModel.findOneAndUpdate(
+      { email: verifyEmailDto.email },
+      {
+        $set: {
+          isEmailVerify: true,
+        },
+      },
+    );
+    throw new HttpException(`Email verification Successful`, 200);
   }
 
   async login(LoginDto: LoginDto) {
@@ -112,14 +180,35 @@ export class AuthService {
       email: forgotPasswordDto.email,
     });
     if (!user) throw new BadRequestException('wrong credential');
+
+    const token = await this.ResetTokenModel.findOne({
+      userId: user._id,
+    });
     const resetToken = nanoid(64);
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getHours() + 1);
-    await this.ResetTokenModel.create({
-      token: resetToken,
-      userId: user._id,
-      expiryDate,
-    });
+    if (token) {
+      await this.ResetTokenModel.findByIdAndUpdate(
+        token._id,
+        {
+          $set: {
+            token: resetToken,
+            userId: user._id,
+            expiryDate,
+          },
+        },
+        {
+          upsert: true,
+        },
+      );
+    } else {
+      await this.ResetTokenModel.create({
+        token: resetToken,
+        userId: user._id,
+        expiryDate,
+      });
+    }
+
     await this.mailService.sendPasswordResetEmail(user.email, resetToken);
     throw new HttpException(
       `If email exit an reset link has been sent ${resetToken} `,
@@ -128,11 +217,9 @@ export class AuthService {
   }
 
   async resetPassword(resetPasswordDto: ResetPasswordDto) {
-    const check = await this.ResetTokenModel.find();
     const resetTokenData = await this.ResetTokenModel.findOneAndDelete({
       token: resetPasswordDto.resetToken,
     });
-
     if (!resetTokenData) throw new UnauthorizedException('Invalid link');
     const hashedPassword = await this.generateHashedPassword(
       resetPasswordDto.newPassword,
@@ -181,5 +268,9 @@ export class AuthService {
 
   generateHashedPassword(password) {
     return bcrypt.hash(password, 10);
+  }
+
+  generateOtp() {
+    return `${Math.floor(10000 + Math.random() * 9000)}`;
   }
 }

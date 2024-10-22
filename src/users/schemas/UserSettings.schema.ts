@@ -5,10 +5,8 @@ import { Prop } from '@nestjs/mongoose';
 export class UserSettings {
   @Prop({ required: true })
   receiveNotification?: boolean;
-
   @Prop({ required: false })
   receiveEmails?: boolean;
-
   @Prop({ required: false })
   receiveSMS?: boolean;
 }

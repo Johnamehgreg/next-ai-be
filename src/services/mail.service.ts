@@ -23,4 +23,13 @@ export class MailService {
     };
     this.mailService.sendMail(mailOptions);
   }
+  async sendVerificationEmail(to: string, otp) {
+    const mailOptions = {
+      from: 'Kingsley Okure <kingsleyokgeorge@gmail.com>',
+      to,
+      subject: 'Email verification',
+      text: `Your verification otp is ${otp}  `,
+    };
+    this.mailService.sendMail(mailOptions);
+  }
 }

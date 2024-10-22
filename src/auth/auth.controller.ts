@@ -7,6 +7,8 @@ import { AuthGuard } from 'src/guards/auth.guard';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
+import { SendVerifyEmailDto } from './dto/send-verify-email.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -15,6 +17,14 @@ export class AuthController {
   @Post('signup')
   signUp(@Body() createUserDto: CreateUserDto) {
     return this.authService.signUp(createUserDto);
+  }
+  @Post('send-verification-email')
+  sendOptVerificationEmail(@Body() sendVerifyEmailDto: SendVerifyEmailDto) {
+    return this.authService.sendOptVerificationEmail(sendVerifyEmailDto);
+  }
+  @Post('verify-email')
+  verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
+    return this.authService.verifyEmail(verifyEmailDto);
   }
   @Post('login')
   login(@Body() LoginDto: LoginDto) {

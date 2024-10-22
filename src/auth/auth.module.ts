@@ -13,6 +13,7 @@ import {
 } from './schemas/RefreshToken.Schema';
 import { ResetToken, ResetTokenSchema } from './schemas/ResetToken.Schema';
 import { MailService } from 'src/services/mail.service';
+import { Otp, OtpTokenSchema } from './schemas/Otp.Schema';
 
 @Module({
   imports: [
@@ -32,6 +33,10 @@ import { MailService } from 'src/services/mail.service';
       {
         name: ResetToken.name,
         schema: ResetTokenSchema,
+      },
+      {
+        name: Otp.name,
+        schema: OtpTokenSchema,
       },
     ]),
   ],

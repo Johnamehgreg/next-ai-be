@@ -242,6 +242,7 @@ export class AuthService {
     await this.mailService.sendPasswordUpdateSuccess(user.email);
     throw new HttpException(`Password update successful `, 200);
   }
+
   async generateUserToken(userId) {
     const accessToken = this.jwtService.sign({ userId }, { expiresIn: '1h' });
     const refreshToken = nanoid(64);
@@ -273,5 +274,13 @@ export class AuthService {
 
   generateOtp() {
     return `${Math.floor(10000 + Math.random() * 9000)}`;
+  }
+
+  async validateGoogleUser(googleUser: CreateUserDto) {
+    const user = await this.UserModel.findOne({
+      email: googleUser.email,
+    });
+    if (user) return user;
+    return await this.UserModel.create(googleUser);
   }
 }

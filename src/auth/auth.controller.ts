@@ -1,4 +1,13 @@
-import { Body, Controller, Post, Put, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
@@ -9,6 +18,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { SendVerifyEmailDto } from './dto/send-verify-email.dto';
+import { GoogleAuthGuard } from 'src/guards/google-auth.guard.ts/google-auth.guard.ts.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -29,6 +39,18 @@ export class AuthController {
   @Post('login')
   login(@Body() LoginDto: LoginDto) {
     return this.authService.login(LoginDto);
+  }
+
+  @UseGuards(GoogleAuthGuard)
+  @Get('google/login')
+  googleLogin() { }
+  @UseGuards(GoogleAuthGuard)
+  @Get('google/callback')
+  async googleCallBack(@Req() req, @Res() res) {
+    const { accessToken } = await this.authService.generateUserToken(
+      req?.user?._id,
+    );
+    return res.redirect(`http://localhost:4000/token=${accessToken}`);
   }
   @UseGuards(AuthGuard)
   @Post('refresh-token')

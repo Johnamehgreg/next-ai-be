@@ -1,4 +1,3 @@
-import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsEmail,
@@ -8,7 +7,6 @@ import {
   IsString,
   Matches,
   MinLength,
-  ValidateNested,
 } from 'class-validator';
 class createSettingsDto {
   @IsOptional()
@@ -25,17 +23,21 @@ class createSettingsDto {
 export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  firstName: string;
+  @IsString()
+  @IsNotEmpty()
+  lastName: string;
   @IsEmail()
   email: string;
   @IsEnum(['admin', 'user', 'editor'], {
     message: 'Invalid role. Please choose from admin, user, or editor.',
   })
+  @IsOptional()
   role: 'admin' | 'user' | 'editor'; // Example roles
   @IsOptional()
-  @ValidateNested()
-  @Type(() => createSettingsDto) // Use Type decorator for nested validation
-  settings: createSettingsDto; // Example settings schema
+  // @ValidateNested()
+  // @Type(() => createSettingsDto)
+  settings: any;
   @IsString()
   @MinLength(8, {
     message: 'Password must contain at least 8 characters',

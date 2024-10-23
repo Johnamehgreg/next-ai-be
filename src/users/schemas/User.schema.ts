@@ -7,7 +7,9 @@ import { Product } from 'src/products/schemas/Product.Schema';
 @Schema({ timestamps: true }) // Enable timestamps
 export class User {
   @Prop({ required: true })
-  name: string;
+  firstName: string;
+  @Prop({ required: true })
+  lastName: string;
   @Prop({ unique: true, required: true })
   email: string;
   @Prop({ required: true })
@@ -32,7 +34,7 @@ export class User {
     ],
   })
   products: Product[];
-  @Prop({ required: true })
+  @Prop({})
   password: string;
 }
 

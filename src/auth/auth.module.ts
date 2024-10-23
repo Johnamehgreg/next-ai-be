@@ -14,9 +14,13 @@ import {
 import { ResetToken, ResetTokenSchema } from './schemas/ResetToken.Schema';
 import { MailService } from 'src/services/mail.service';
 import { Otp, OtpTokenSchema } from './schemas/Otp.Schema';
+import googleOauthConfig from 'src/config/google-oauth.config';
+import { ConfigModule } from '@nestjs/config';
+import { GoogleStrategy } from 'src/stratagies/google.strategy';
 
 @Module({
   imports: [
+    ConfigModule.forFeature(googleOauthConfig),
     MongooseModule.forFeature([
       {
         name: User.name,
@@ -41,6 +45,6 @@ import { Otp, OtpTokenSchema } from './schemas/Otp.Schema';
     ]),
   ],
   controllers: [AuthController],
-  providers: [AuthService, MailService],
+  providers: [AuthService, MailService, GoogleStrategy],
 })
 export class AuthModule { }

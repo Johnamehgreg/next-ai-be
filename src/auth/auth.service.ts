@@ -116,6 +116,7 @@ export class AuthService {
       {
         $set: {
           isEmailVerify: true,
+          otp: '',
         },
       },
     );

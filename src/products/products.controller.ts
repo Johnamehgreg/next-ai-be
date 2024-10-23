@@ -9,11 +9,13 @@ import {
   ValidationPipe,
   UseGuards,
   Req,
+  Query,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { AuthGuard } from 'src/guards/auth.guard';
+import { PaginationDTO } from 'src/dto/pagination.dto';
 
 @Controller('products')
 export class ProductsController {
@@ -25,8 +27,8 @@ export class ProductsController {
   }
 
   @Get()
-  findAll() {
-    return this.productsService.findAll();
+  findAll(@Query() paginationDTO?: PaginationDTO) {
+    return this.productsService.findAll(paginationDTO);
   }
 
   @Get(':id')

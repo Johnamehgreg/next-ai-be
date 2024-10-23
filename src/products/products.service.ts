@@ -5,18 +5,20 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Product } from './schemas/Product.Schema';
 import { User } from 'src/users/schemas/User.schema';
+import { DEFAULT_PAGE_SIZE } from 'src/utils/constants';
+import { PaginationDTO } from 'src/dto/pagination.dto';
 
 @Injectable()
 export class ProductsService {
   constructor(
-    @InjectModel(Product.name) private PostModel: Model<Product>,
+    @InjectModel(Product.name) private ProductModel: Model<Product>,
     @InjectModel(User.name) private userModel: Model<User>,
   ) { }
   async create({ ...createProductDto }: CreateProductDto, userId: string) {
     const findUser = await this.userModel.findById(userId);
     if (!findUser)
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    const newProduct = new this.PostModel(createProductDto);
+    const newProduct = new this.ProductModel(createProductDto);
     const saveProduct = await newProduct.save();
     await findUser.updateOne({
       $push: {
@@ -26,8 +28,16 @@ export class ProductsService {
     return saveProduct;
   }
 
-  findAll() {
-    return `This action returns all products`;
+  async findAll(paginationDTO: PaginationDTO) {
+    const { skip = 0, limit = DEFAULT_PAGE_SIZE } = paginationDTO;
+    const data = await this.ProductModel.find().skip(skip).limit(limit);
+    const totalCount = await this.ProductModel.countDocuments();
+    return {
+      data,
+      currentPage: Math.ceil(skip / limit) + 1,
+      totalPages: Math.ceil(totalCount / limit),
+      totalCount,
+    };
   }
 
   findOne(id: number) {

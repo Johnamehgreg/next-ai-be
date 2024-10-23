@@ -12,6 +12,7 @@ import {
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { checkIdIsValid } from 'src/helper';
+import { PaginationDTO } from 'src/dto/pagination.dto';
 
 
 
@@ -20,8 +21,8 @@ export class UsersController {
     // Add user-related endpoints here
     constructor(private readonly usersService: UsersService) { };
     @Get()
-    findAll(@Query('role') role?: string) {
-        return this.usersService.findAll(role);
+    findAll(@Query() paginationDTO?: PaginationDTO) {
+        return this.usersService.findAll(paginationDTO);
     }
     @Get(':id') // Get single user
     async findOne(@Param('id') id: string,) {

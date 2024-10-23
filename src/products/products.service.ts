@@ -12,7 +12,7 @@ export class ProductsService {
     @InjectModel(Product.name) private PostModel: Model<Product>,
     @InjectModel(User.name) private userModel: Model<User>,
   ) { }
-  async create({ userId, ...createProductDto }: CreateProductDto) {
+  async create({ ...createProductDto }: CreateProductDto, userId: string) {
     const findUser = await this.userModel.findById(userId);
     if (!findUser)
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);

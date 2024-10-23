@@ -7,19 +7,21 @@ import {
   Param,
   Delete,
   ValidationPipe,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { AuthGuard } from 'src/guards/auth.guard';
 
 @Controller('posts')
 export class PostsController {
   constructor(private readonly postsService: PostsService) { }
-
+  @UseGuards(AuthGuard)
   @Post()
-  create(@Body(ValidationPipe) createPostDto: CreatePostDto) {
-    console.log(createPostDto);
-    return this.postsService.create(createPostDto);
+  create(@Body(ValidationPipe) createPostDto: CreatePostDto, @Req() req) {
+    return this.postsService.create(createPostDto, req.userId);
   }
 
   @Get()

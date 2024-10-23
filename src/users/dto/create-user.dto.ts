@@ -22,10 +22,10 @@ class createSettingsDto {
 
 export class CreateUserDto {
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   firstName: string;
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   lastName: string;
   @IsEmail()
   email: string;

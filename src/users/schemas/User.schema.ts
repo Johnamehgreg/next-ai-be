@@ -6,9 +6,9 @@ import { Product } from 'src/products/schemas/Product.Schema';
 
 @Schema({ timestamps: true }) // Enable timestamps
 export class User {
-  @Prop({ required: true })
+  @Prop()
   firstName: string;
-  @Prop({ required: true })
+  @Prop()
   lastName: string;
   @Prop({ unique: true, required: true })
   email: string;

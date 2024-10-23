@@ -59,6 +59,7 @@ export class AuthService {
     const newUser = new this.UserModel({
       ...createUserDto,
       password: hashedPassword,
+      role: 'user',
       settings: settings._id,
     });
     const savedUser = await (await newUser.save()).populate('settings');

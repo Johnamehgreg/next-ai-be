@@ -282,6 +282,12 @@ export class AuthService {
       email: googleUser.email,
     });
     if (user) return user;
-    return await this.UserModel.create(googleUser);
+    const settings = await this.UserSettingsModel.create({
+      receiveNotification: true,
+    });
+    return await this.UserModel.create({
+      ...googleUser,
+      settings: settings._id,
+    });
   }
 }

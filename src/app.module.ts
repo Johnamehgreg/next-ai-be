@@ -10,6 +10,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import config from './config/config';
 import { JwtModule } from '@nestjs/jwt';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
     PostsModule,
     ProductsModule,
     AuthModule,
+    CategoriesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -28,7 +28,7 @@ export class UsersController {
     async findOne(@Param('id') id: string,) {
         checkIdIsValid(id)
         const findUser = await this.usersService.findOne(id);
-        if (!findUser) throw new HttpException('User not found', HttpStatus.NOT_FOUND)
+        if (!findUser) throw new HttpException('User not found', HttpStatus.UNAUTHORIZED)
         return this.usersService.findOne(id);
     }
 
@@ -40,16 +40,10 @@ export class UsersController {
     async update(@Param('id') id: string,
         @Body(ValidationPipe) updateUserDto: UpdateUserDto
     ) {
-        checkIdIsValid(id)
-        const updatedUser = await this.usersService.update(id, updateUserDto);
-        if (!updatedUser) throw new HttpException('User not found', HttpStatus.NOT_FOUND)
-        return updatedUser
+        return this.usersService.update(id, updateUserDto);
     }
     @Delete(':id')
     async delete(@Param('id') id: string) {
-        checkIdIsValid(id)
-        const deletedUser = await this.usersService.delete(id)
-        if (!deletedUser) throw new HttpException('User not found', HttpStatus.NOT_FOUND)
-        return deletedUser
+        return this.usersService.delete(id);
     }
 }

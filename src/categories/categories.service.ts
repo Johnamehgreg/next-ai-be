@@ -1,5 +1,7 @@
 import {
   BadRequestException,
+  HttpException,
+  HttpStatus,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -33,10 +35,14 @@ export class CategoriesService {
     }).exec();
     if (existingCategory)
       throw new BadRequestException('Sub category name already exists');
-    const newCategory = new this.SubCategoryModel(createSubCategoryDto);
-    const findCategory = this.CategoryModel.findById(
+    const findCategory = await this.CategoryModel.findById(
       createSubCategoryDto.categoryId,
     );
+    const newCategory = new this.SubCategoryModel({
+      ...createSubCategoryDto,
+      type: findCategory.type,
+    });
+
     if (!findCategory) throw new BadRequestException('Invalid category id');
     const saveCategory = await newCategory.save();
     await findCategory.updateOne({
@@ -93,13 +99,13 @@ export class CategoriesService {
   }
 
   async remove(id: string) {
-    const category = await this.CategoryModel.findById(id);
+    const category = await this.CategoryModel.findByIdAndDelete(id);
     if (!category) throw new NotFoundException('Cannot find category');
-    return this.CategoryModel.findByIdAndDelete(id);
+    throw new HttpException('Category delete successful', HttpStatus.OK);
   }
   async removeSubCategory(id: string) {
-    const category = await this.SubCategoryModel.findById(id);
+    const category = await this.SubCategoryModel.findByIdAndDelete(id);
     if (!category) throw new NotFoundException('Cannot sub find category');
-    return this.SubCategoryModel.findByIdAndDelete(id);
+    throw new HttpException('Sub category delete successful', HttpStatus.OK);
   }
 }

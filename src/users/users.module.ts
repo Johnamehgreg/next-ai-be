@@ -7,6 +7,7 @@ import {
   UserSettings,
   userSettingsSchema,
 } from './schemas/UserSettings.schema';
+import { AuthGuard } from 'src/guards/auth.guard';
 
 @Module({
   imports: [
@@ -22,6 +23,6 @@ import {
     ]),
   ],
   controllers: [UsersController],
-  providers: [UsersService],
+  providers: [UsersService, AuthGuard],
 })
 export class UsersModule { }

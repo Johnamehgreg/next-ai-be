@@ -12,6 +12,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { CategoriesModule } from './categories/categories.module';
 import { User, UserSchema } from './users/schemas/User.schema';
+import { ServicesModule } from './services/services.module';
 
 @Module({
   imports: [
@@ -76,6 +77,7 @@ import { User, UserSchema } from './users/schemas/User.schema';
     ProductsModule,
     AuthModule,
     CategoriesModule,
+    ServicesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

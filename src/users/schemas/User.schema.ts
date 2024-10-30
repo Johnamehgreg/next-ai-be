@@ -1,8 +1,49 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose from 'mongoose';
-import { UserSettings } from './UserSettings.schema';
 import { Post } from 'src/posts/schemas/Post.Schema';
 import { Product } from 'src/products/schemas/Product.Schema';
+
+@Schema()
+class NotificationSettings {
+  @Prop({ required: true })
+  receiveNotification?: boolean;
+  @Prop({ required: true })
+  receiveEmails?: boolean;
+  @Prop({ required: true })
+  receiveSMS?: boolean;
+}
+const NotificationSettingsSchema =
+  SchemaFactory.createForClass(NotificationSettings);
+@Schema()
+class BusinessInformationSettings {
+  @Prop()
+  businessName?: string;
+  @Prop()
+  country?: string;
+  @Prop()
+  businessAddress?: string;
+  @Prop()
+  businessPhoneNumber?: string;
+  @Prop()
+  businessLogo?: string;
+}
+const BusinessInformationSettingsSchema = SchemaFactory.createForClass(
+  BusinessInformationSettings,
+);
+@Schema()
+class BusinessVerificationSettings {
+  @Prop({ default: false })
+  isVerify?: boolean;
+  @Prop()
+  businessName?: string;
+  @Prop()
+  RegNumber?: string;
+  @Prop()
+  document?: string;
+}
+const BusinessVerificationSettingsSchema = SchemaFactory.createForClass(
+  BusinessVerificationSettings,
+);
 
 @Schema({ timestamps: true }) // Enable timestamps
 export class User {
@@ -14,8 +55,24 @@ export class User {
   email: string;
   @Prop({ required: true })
   role: string;
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'UserSettings' })
-  settings: UserSettings;
+  @Prop({
+    type: NotificationSettingsSchema,
+    default: {
+      receiveNotification: true,
+      receiveEmails: true,
+      receiveSMS: false,
+    },
+  })
+  notificationSettings: NotificationSettings;
+  @Prop({
+    type: BusinessInformationSettingsSchema,
+  })
+  businessInformation: BusinessInformationSettings;
+  @Prop({
+    type: BusinessVerificationSettingsSchema,
+  })
+  businessVerification: BusinessVerificationSettings;
+
   @Prop({
     type: [
       {
@@ -39,3 +96,35 @@ export class User {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+
+UserSchema.set('toJSON', {
+  virtuals: true,
+  transform: (_, ret) => {
+    if (ret.notificationSettings) {
+      delete ret.notificationSettings._id;
+    }
+    if (ret.businessInformation) {
+      delete ret.businessInformation._id;
+    }
+    if (ret.businessVerification) {
+      delete ret.businessVerification._id;
+    }
+    return ret;
+  },
+});
+
+UserSchema.set('toObject', {
+  virtuals: true,
+  transform: (_, ret) => {
+    if (ret.notificationSettings) {
+      delete ret.notificationSettings._id;
+    }
+    if (ret.businessInformation) {
+      delete ret.businessInformation._id;
+    }
+    if (ret.businessVerification) {
+      delete ret.businessVerification._id;
+    }
+    return ret;
+  },
+});

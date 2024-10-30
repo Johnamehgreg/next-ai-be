@@ -3,10 +3,7 @@ import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './schemas/User.schema';
-import {
-  UserSettings,
-  userSettingsSchema,
-} from './schemas/UserSettings.schema';
+
 import { AuthGuard } from 'src/guards/auth.guard';
 
 @Module({
@@ -15,10 +12,6 @@ import { AuthGuard } from 'src/guards/auth.guard';
       {
         name: User.name,
         schema: UserSchema,
-      },
-      {
-        name: UserSettings.name,
-        schema: userSettingsSchema,
       },
     ]),
   ],

@@ -1,24 +1,12 @@
 import {
-  IsBoolean,
   IsEmail,
   IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
   Matches,
-  MinLength,
+  MinLength
 } from 'class-validator';
-class createSettingsDto {
-  @IsOptional()
-  @IsBoolean()
-  receiveNotification: boolean;
-  @IsOptional()
-  @IsBoolean()
-  receiveEmails: boolean;
-  @IsOptional()
-  @IsBoolean()
-  receiveSMS: boolean;
-}
 
 export class CreateUserDto {
   @IsString()
@@ -34,10 +22,6 @@ export class CreateUserDto {
   })
   @IsOptional()
   role: 'admin' | 'user' | 'editor'; // Example roles
-  @IsOptional()
-  // @ValidateNested()
-  // @Type(() => createSettingsDto)
-  settings: any;
   @IsString()
   @MinLength(8, {
     message: 'Password must contain at least 8 characters',

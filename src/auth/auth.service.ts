@@ -19,19 +19,17 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { nanoid } from 'nanoid';
 import { ResetToken } from './schemas/ResetToken.Schema';
-import { MailService } from 'src/services/mail.service';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { UserSettings } from 'src/users/schemas/UserSettings.schema';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { Otp } from './schemas/Otp.Schema';
 import { SendVerifyEmailDto } from './dto/send-verify-email.dto';
+import { MailService } from 'src/app-services/mail.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectModel(User.name) private UserModel: Model<User>,
-    @InjectModel(UserSettings.name)
-    private UserSettingsModel: Model<UserSettings>,
+
     @InjectModel(RefreshToken.name)
     private RefreshTokenModel: Model<RefreshToken>,
     @InjectModel(ResetToken.name)
@@ -52,22 +50,17 @@ export class AuthService {
     });
     if (!check?.isEmailVerify)
       throw new BadRequestException('Email is not verified');
-    const settings = await this.UserSettingsModel.create({
-      receiveNotification: true,
-    });
     const hashedPassword = await this.generateHashedPassword(password);
     const newUser = new this.UserModel({
       ...createUserDto,
       password: hashedPassword,
       role: 'user',
-      settings: settings._id,
     });
     const savedUser = await (await newUser.save()).populate('settings');
 
     // Convert to plain object and remove the password field
     const userObject = savedUser.toObject();
     delete userObject.password;
-
     return { message: 'Account created successfully' };
   }
 
@@ -127,7 +120,7 @@ export class AuthService {
   async login(LoginDto: LoginDto) {
     const user = await this.UserModel.findOne({
       email: LoginDto.email,
-    });
+    }).select('-password');
     if (!user) throw new UnauthorizedException('Invalid login');
     const passwordMatch = await bcrypt.compare(
       LoginDto.password,
@@ -136,9 +129,7 @@ export class AuthService {
     if (!passwordMatch) throw new UnauthorizedException('Invalid login');
     const token = await this.generateUserToken(user?._id);
     return {
-      user_id: user._id,
-      email: user.email,
-      role: user.role,
+      user,
       ...token,
     };
   }
@@ -282,12 +273,8 @@ export class AuthService {
       email: googleUser.email,
     });
     if (user) return user;
-    const settings = await this.UserSettingsModel.create({
-      receiveNotification: true,
-    });
     return await this.UserModel.create({
       ...googleUser,
-      settings: settings._id,
     });
   }
 }

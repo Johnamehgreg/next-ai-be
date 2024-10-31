@@ -64,15 +64,15 @@ export class UpdateBusinessVerificationSettingsDto {
   static allowedFields = ['businessName', 'regNumber', 'document'];
   @IsNotEmpty()
   @IsBoolean()
-  businessName: boolean;
+  businessName: string;
 
   @IsNotEmpty()
   @IsBoolean()
-  regNumber: boolean;
+  regNumber: string;
 
   @IsNotEmpty()
   @IsBoolean()
-  document: boolean;
+  document: string;
 }
 
 

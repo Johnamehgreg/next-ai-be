@@ -13,6 +13,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { CategoriesModule } from './categories/categories.module';
 import { User, UserSchema } from './users/schemas/User.schema';
 import { ServicesModule } from './services/services.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -78,6 +79,7 @@ import { ServicesModule } from './services/services.module';
     AuthModule,
     CategoriesModule,
     ServicesModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -9,13 +9,15 @@ export class UploadService {
       cloud_name: this.configService.get<string>('CLOUDINARY_CLOUD_NAME'),
       api_key: this.configService.get<string>('CLOUDINARY_API_KEY'),
       api_secret: this.configService.get<string>('CLOUDINARY_API_SECRET'),
+      secure: true,
+      upload_preset: 'product-name',
     });
   }
 
   async uploadImage(file: Express.Multer.File): Promise<any> {
     const response: any = await new Promise((resolve, reject) => {
       cloudinary.uploader
-        .upload_stream((error, result) => {
+        .upload_stream({ folder: 'product-image' }, (error, result) => {
           if (error) reject(error);
           else resolve(result);
         })
@@ -23,7 +25,8 @@ export class UploadService {
     });
 
     return {
-      // ...response,
+      name: file.originalname,
+      mimetype: file.mimetype,
       resource_type: response.resource_type,
       url: response.url,
     };

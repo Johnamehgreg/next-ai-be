@@ -1,12 +1,15 @@
 import {
+  Body,
   Controller,
   ParseFilePipe,
   Post,
   UploadedFile,
   UseInterceptors,
+  ValidationPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UploadService } from './upload.service';
+import { UploadDto } from './dto/upload.dto';
 
 @Controller('upload')
 export class UploadController {
@@ -24,7 +27,8 @@ export class UploadController {
       }),
     )
     file: Express.Multer.File,
+    @Body(ValidationPipe) uploadDto: UploadDto,
   ) {
-    return await this.uploadService.uploadImage(file);
+    return await this.uploadService.uploadImage(file, uploadDto.folder);
   }
 }

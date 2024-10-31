@@ -14,10 +14,11 @@ export class UploadService {
     });
   }
 
-  async uploadImage(file: Express.Multer.File): Promise<any> {
+  async uploadImage(file: Express.Multer.File, folder?: string): Promise<any> {
+    console.log(folder);
     const response: any = await new Promise((resolve, reject) => {
       cloudinary.uploader
-        .upload_stream({ folder: 'product-image' }, (error, result) => {
+        .upload_stream({ folder: folder }, (error, result) => {
           if (error) reject(error);
           else resolve(result);
         })

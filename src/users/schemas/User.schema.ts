@@ -37,7 +37,7 @@ class BusinessVerificationSettings {
   @Prop()
   businessName?: string;
   @Prop()
-  RegNumber?: string;
+  regNumber?: string;
   @Prop()
   document?: string;
 }

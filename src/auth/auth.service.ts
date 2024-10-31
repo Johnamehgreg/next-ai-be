@@ -268,7 +268,7 @@ export class AuthService {
     return `${Math.floor(10000 + Math.random() * 9000)}`;
   }
 
-  async validateGoogleUser(googleUser: CreateUserDto) {
+  async validateGoogleUser(googleUser: any) {
     const user = await this.UserModel.findOne({
       email: googleUser.email,
     });

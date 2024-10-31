@@ -1,6 +1,7 @@
 import { IsNotEmpty, IsString, Matches, MinLength } from 'class-validator';
 
 export class ResetPasswordDto {
+  static allowedFields = ['resetToken', 'newPassword'];
   @IsString()
   @IsNotEmpty()
   resetToken: string;

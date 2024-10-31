@@ -1,34 +1,24 @@
 import {
-  IsEmail,
-  IsEnum,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
   Matches,
-  MinLength
+  IsNotEmpty,
+  IsString,
+  IsEmail,
+  MinLength,
 } from 'class-validator';
 
 export class CreateUserDto {
+  static allowedFields = ['email', 'password'];
   @IsString()
-  @IsOptional()
-  firstName: string;
-  @IsString()
-  @IsOptional()
-  lastName: string;
+  @IsNotEmpty()
   @IsEmail()
   email: string;
-  @IsEnum(['admin', 'user', 'editor'], {
-    message: 'Invalid role. Please choose from admin, user, or editor.',
-  })
-  @IsOptional()
-  role: 'admin' | 'user' | 'editor'; // Example roles
   @IsString()
+  @IsNotEmpty()
   @MinLength(8, {
     message: 'Password must contain at least 8 characters',
   })
   @Matches(/^(?=.*[0-9])/, {
     message: 'Password must contain at least one number',
   })
-  @IsNotEmpty()
   password: string;
 }

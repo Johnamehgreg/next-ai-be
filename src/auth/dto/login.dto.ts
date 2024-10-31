@@ -7,6 +7,7 @@ import {
 } from 'class-validator';
 
 export class LoginDto {
+  static allowedFields = ['email', 'password'];
   @IsString()
   @IsNotEmpty()
   @IsEmail()

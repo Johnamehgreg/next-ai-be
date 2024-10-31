@@ -2,15 +2,33 @@
 import {
   IsBoolean, IsNotEmpty,
   IsOptional,
-  IsString
+  IsString,
+  IsEnum,
+  IsEmail
 } from 'class-validator';
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateUserDto } from './create-user.dto';
 
+export class UpdateUserDto {
+  static allowedFields = ['firstName', 'lastName', 'email', 'role'];
+  @IsString()
+  @IsOptional()
+  firstName: string;
+  @IsString()
+  @IsOptional()
+  lastName: string;
+  @IsEmail()
+  email: string;
+  @IsEnum(['admin', 'user', 'editor'], {
+    message: 'Invalid role. Please choose from admin, user, or editor.',
+  })
+  @IsOptional()
+  role: 'admin' | 'user' | 'editor'; // Example roles
 
-export class UpdateUserDto extends PartialType(CreateUserDto) { }
+}
+
 
 export class UpdateNotificationSettingsDto {
+  static allowedFields = ['receiveNotification', 'receiveEmails', 'receiveSMS'];
+
   @IsOptional()
   @IsBoolean()
   receiveNotification: boolean;
@@ -23,6 +41,7 @@ export class UpdateNotificationSettingsDto {
 }
 
 export class UpdateBusinessInformationSettingsDto {
+  static allowedFields = ['businessName', 'country', 'businessAddress', 'businessPhoneNumber', 'businessLogo'];
   @IsNotEmpty()
   @IsString()
   businessName: string;
@@ -40,14 +59,20 @@ export class UpdateBusinessInformationSettingsDto {
   businessLogo: string;
 }
 
+
 export class UpdateBusinessVerificationSettingsDto {
+  static allowedFields = ['businessName', 'regNumber', 'document'];
   @IsNotEmpty()
   @IsBoolean()
   businessName: boolean;
+
   @IsNotEmpty()
   @IsBoolean()
-  RegNumber: boolean;
+  regNumber: boolean;
+
   @IsNotEmpty()
   @IsBoolean()
   document: boolean;
 }
+
+

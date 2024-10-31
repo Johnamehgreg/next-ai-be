@@ -1,6 +1,8 @@
 import { IsNotEmpty, IsString, Matches, MinLength } from 'class-validator';
 
 export class ChangePasswordDto {
+  static allowedFields = ['oldPassword', 'newPassword'];
+
   @IsString()
   @IsNotEmpty()
   @MinLength(8, {

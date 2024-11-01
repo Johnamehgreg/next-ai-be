@@ -14,6 +14,7 @@ import { CategoriesModule } from './categories/categories.module';
 import { User, UserSchema } from './users/schemas/User.schema';
 import { ServicesModule } from './services/services.module';
 import { UploadModule } from './upload/upload.module';
+import { StripeModule } from './custom-module/stripe.module';
 
 @Module({
   imports: [
@@ -27,6 +28,15 @@ import { UploadModule } from './upload/upload.module';
     //     },
     //   },
     // }),
+
+    StripeModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        apiKey: configService.get<string>('stripe.apiKey'),
+        config: {}, // Optional: Add any Stripe configuration here if needed
+      }),
+      inject: [ConfigService],
+    }),
 
     MailerModule.forRootAsync({
       imports: [ConfigModule],

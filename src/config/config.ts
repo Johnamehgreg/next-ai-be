@@ -5,6 +5,9 @@ export default () => ({
   database: {
     connectionString: process.env.MONGO_URL,
   },
+  stripe: {
+    apiKey: process.env.STRIPE_SECRET_API_KEY,
+  },
   email: {
     user: process.env.EMAIL_USERNAME,
     pass: process.env.EMAIL_PASSWORD,

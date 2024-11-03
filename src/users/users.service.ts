@@ -56,7 +56,7 @@ export class UsersService {
 
   async updateUserNotificationSettings(id: string, updateSettingsDto: UpdateNotificationSettingsDto) {
     checkIdIsValid(id)
-    console.log(updateSettingsDto)
+
     const updatedUserNotificationSettings = await this.userModel.findByIdAndUpdate(
       id,
       {
@@ -97,7 +97,6 @@ export class UsersService {
   }
   async updateUserBusinessVerificationSettings(id: string, updateSettingsDto: UpdateBusinessVerificationSettingsDto) {
     checkIdIsValid(id)
-    console.log(updateSettingsDto)
     const updatedUserNotificationSettings = await this.userModel.findByIdAndUpdate(
       id,
       {

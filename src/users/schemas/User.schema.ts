@@ -44,6 +44,12 @@ class BusinessVerificationSettings {
 const BusinessVerificationSettingsSchema = SchemaFactory.createForClass(
   BusinessVerificationSettings,
 );
+@Schema()
+class Subscription {
+  @Prop()
+  customer_id?: string;
+}
+const SubscriptionSchema = SchemaFactory.createForClass(Subscription);
 
 @Schema({ timestamps: true }) // Enable timestamps
 export class User {
@@ -72,6 +78,10 @@ export class User {
     type: BusinessVerificationSettingsSchema,
   })
   businessVerification: BusinessVerificationSettings;
+  @Prop({
+    type: SubscriptionSchema,
+  })
+  subscription: Subscription;
 
   @Prop({
     type: [

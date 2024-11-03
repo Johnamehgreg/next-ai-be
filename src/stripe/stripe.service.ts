@@ -1,5 +1,14 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { User } from 'src/users/schemas/User.schema';
 import { STRIPE_CLIENT } from 'src/utils/constants';
 import Stripe from 'stripe';
 
@@ -8,6 +17,7 @@ export class StripeService {
   constructor(
     @Inject(STRIPE_CLIENT) private readonly stripe: Stripe,
     private readonly configService: ConfigService,
+    @InjectModel(User.name) private userModel: Model<User>,
   ) { }
 
   async getSubscriptionProductList() {
@@ -41,30 +51,85 @@ export class StripeService {
 
     return productDetails;
   }
-  async createCustomer(email: string, paymentMethodId: string) {
+  async createCustomer(email: string) {
     return await this.stripe.customers.create({
       email,
-      payment_method: paymentMethodId,
-      invoice_settings: { default_payment_method: paymentMethodId },
     });
   }
 
+  async getCustomerBillingPortal(userId: string) {
+    const findUser = await this.userModel.findById(userId);
+    if (!findUser)
+      throw new HttpException('User not found', HttpStatus.UNAUTHORIZED);
+    if (!findUser.subscription.customer_id)
+      throw new BadRequestException('User does not have subscription');
+    const portalSessions = await this.stripe.billingPortal.sessions.create({
+      customer: findUser.subscription.customer_id,
+      return_url: this.configService.get<string>('WEB_SITE_URL'),
+    });
+    return {
+      url: portalSessions.url,
+    };
+  }
+
   async createSubscription({
-    customerId,
     planId,
+    userId,
   }: {
-    customerId: string;
     planId: string;
+    userId: string;
   }) {
+    const findUser = await this.userModel.findById(userId);
+    if (!findUser)
+      throw new HttpException('User not found', HttpStatus.UNAUTHORIZED);
     if (!planId) throw new BadRequestException('Subscription plan not found');
     const product = await this.stripe.products.retrieve(planId);
     if (!product) throw new BadRequestException('Subscription plan not found');
+    const customerId = findUser?.subscription?.customer_id;
+    if (!customerId) {
+      const generatedCustomerId = await this.createCustomer(findUser.email);
+      const updatedUser = await this.userModel.findByIdAndUpdate(
+        userId,
+        {
+          $set: { 'subscription.customer_id': generatedCustomerId.id },
+        },
+        {
+          new: true,
+          upsert: true,
+        },
+      );
+
+      const session = this.createSession({
+        customerId: updatedUser.subscription.customer_id,
+        priceId: product.default_price as string,
+      });
+
+      return {
+        url: (await session).url,
+      };
+    }
+    const session = this.createSession({
+      customerId,
+      priceId: product.default_price as string,
+    });
+
+    return {
+      url: (await session).url,
+    };
+  }
+
+  async createSession({
+    customerId,
+    priceId,
+  }: {
+    customerId: string;
+    priceId: string;
+  }) {
     const session = await this.stripe.checkout.sessions.create({
       customer: customerId,
-      // billing_address_collection: 'auto',
       line_items: [
         {
-          price: product.default_price as string,
+          price: priceId as string,
           // For metered billing, do not pass quantity
           quantity: 1,
         },
@@ -73,9 +138,8 @@ export class StripeService {
       success_url: `${this.configService.get<string>('WEB_SITE_URL')}/stripe/success?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${this.configService.get<string>('WEB_SITE_URL')}/stripe/cancel`,
     });
-    return {
-      url: session.url,
-    };
+
+    return session;
   }
 
   async getSuccessUrl(sessionId: string) {

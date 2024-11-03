@@ -1,18 +1,22 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
   Inject,
-  Param,
   Post,
   Query,
+  RawBodyRequest,
+  Req,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { StripeService } from './stripe.service';
 import { STRIPE_CLIENT } from 'src/utils/constants';
 import Stripe from 'stripe';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
+import { AuthGuard } from 'src/guards/auth.guard';
 
 @Controller('stripe')
 export class StripeController {
@@ -30,19 +34,19 @@ export class StripeController {
   listProductSubscription() {
     return this.stripeService.getSubscriptionProductList();
   }
+
   @Post('create-customer')
-  async createCustomer(
-    @Body('email') email: string,
-    @Body('paymentMethodId') paymentMethodId: string,
-  ) {
-    return await this.stripeService.createCustomer(email, paymentMethodId);
+  async createCustomer(@Body('email') email: string) {
+    return await this.stripeService.createCustomer(email);
   }
+
+  @UseGuards(AuthGuard)
   @Post('create-subscription')
-  async createSubscription(
-    @Body('customerId') customerId: string,
-    @Query('planId') planId: string,
-  ) {
-    return this.stripeService.createSubscription({ customerId, planId });
+  async createSubscription(@Query('planId') planId: string, @Req() req) {
+    return this.stripeService.createSubscription({
+      planId,
+      userId: req.userId,
+    });
   }
 
   @Get('success')
@@ -53,15 +57,50 @@ export class StripeController {
   async getCancel(@Res() res: Response) {
     res.redirect('/');
   }
-  @Get('customer-billing-portal/:customer_id')
-  async getCustomerBillingPortal(
-    @Param('customer_id') customer_id: string,
-    @Res() res: Response,
-  ) {
-    const portalSessions = await this.stripe.billingPortal.sessions.create({
-      customer: customer_id,
-      return_url: this.configService.get<string>('WEB_SITE_URL'),
-    });
-    res.redirect(portalSessions.url);
+
+  @UseGuards(AuthGuard)
+  @Get('customer-billing-portal')
+  async getCustomerBillingPortal(@Req() req) {
+    return this.stripeService.getCustomerBillingPortal(req.userId);
+  }
+  async handleWebhook(@Req() req: RawBodyRequest<Request>) {
+    const sig = req.headers['stripe-signature'];
+    const rawBody = req.rawBody;
+
+    console.log(rawBody, 'raw body');
+    let event: any;
+
+    try {
+      event = this.stripe.webhooks.constructEvent(
+        rawBody,
+        sig,
+        this.configService.get<string>('STRIPE_WEBHOOK_SECRET_KEY'),
+      );
+    } catch (err) {
+      throw new BadRequestException('Webhook error: ' + err.message);
+    }
+    switch (event.type) {
+      // Event when the subscription is started
+      case 'checkout.session.completed':
+        console.log(event.data, 'new subscription is started');
+        // Handle the checkout.session.completed event
+        break;
+      // Event when the payment is successful (every subscription interval)
+      case 'invoice.paid':
+        console.log(event.data, 'Payment paid');
+        break;
+      // Event when the payment is failed due to card problem or insufficient founds (every subscription interval)
+      case 'invoice.payment_failed':
+        console.log(event.data, 'Payment failed');
+        break;
+      //  Event when subscription is updated
+      case 'customer.subscription.updated':
+        console.log(event.data, 'Payment update');
+        break;
+      default:
+        console.log(`Received ${event.type} event.`);
+        break;
+    }
+    console.log(event, 'test');
   }
 }

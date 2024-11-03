@@ -14,4 +14,6 @@ export default () => ({
     host: process.env.EMAIL_HOST,
     port: process.env.EMAIL_PORT,
   },
+  websiteUrl: process.env.WEB_SITE_URL,
+  domainUrl: process.env.DOMAIN_URL,
 });

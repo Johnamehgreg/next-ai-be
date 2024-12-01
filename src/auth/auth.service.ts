@@ -24,6 +24,7 @@ import { VerifyEmailDto } from './dto/verify-email.dto';
 import { Otp } from './schemas/Otp.Schema';
 import { SendVerifyEmailDto } from './dto/send-verify-email.dto';
 import { MailService } from 'src/app-services/mail.service';
+import axios from 'axios';
 
 @Injectable()
 export class AuthService {
@@ -56,7 +57,7 @@ export class AuthService {
       password: hashedPassword,
       role: 'user',
     });
-    const savedUser = await (await newUser.save()).populate('settings');
+    const savedUser = await await newUser.save();
 
     // Convert to plain object and remove the password field
     const userObject = savedUser.toObject();
@@ -65,6 +66,10 @@ export class AuthService {
   }
 
   async sendOptVerificationEmail(sendVerifyEmailDto: SendVerifyEmailDto) {
+    const emailExit = await this.UserModel.findOne({
+      email: sendVerifyEmailDto.email,
+    });
+    if (emailExit) throw new BadRequestException('Email already exit');
     const otp = this.generateOtp();
     const hashedOtp = await this.generateHashedPassword(otp);
     const expiryDate = new Date();
@@ -95,7 +100,6 @@ export class AuthService {
   }
 
   async verifyEmail(verifyEmailDto: VerifyEmailDto) {
-    console.log(verifyEmailDto);
     const exitedOtp = await this.OtpModel.findOne({
       email: verifyEmailDto.email,
     });
@@ -120,7 +124,7 @@ export class AuthService {
   async login(LoginDto: LoginDto) {
     const user = await this.UserModel.findOne({
       email: LoginDto.email,
-    }).select('-password');
+    });
     if (!user) throw new UnauthorizedException('Invalid login');
     const passwordMatch = await bcrypt.compare(
       LoginDto.password,
@@ -265,7 +269,7 @@ export class AuthService {
   }
 
   generateOtp() {
-    return `${Math.floor(10000 + Math.random() * 9000)}`;
+    return `${Math.floor(1000 + Math.random() * 9000)}`;
   }
 
   async validateGoogleUser(googleUser: any) {
@@ -276,5 +280,35 @@ export class AuthService {
     return await this.UserModel.create({
       ...googleUser,
     });
+  }
+
+  async getUserGoogleInfo(token: string) {
+    try {
+      const response = await axios.get(
+        'https://www.googleapis.com/oauth2/v1/userinfo',
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          params: {
+            alt: 'json',
+          },
+        },
+      );
+      const user: any = await this.validateGoogleUser(response.data);
+
+      const { accessToken, refreshToken } = await this.generateUserToken(
+        user?._id as string,
+      );
+
+      return {
+        user,
+        accessToken,
+        refreshToken,
+      };
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+      throw new Error('Failed to fetch user information');
+    }
   }
 }

@@ -15,6 +15,16 @@ async function bootstrap() {
   );
   app.use('/stripe/webhook', bodyParser.raw({ type: 'application/json' }));
   app.useGlobalPipes(new ValidateNonEmptyBodyPipe());
+  app.enableCors();
+
+  // Or customize CORS settings
+  app.enableCors({
+    origin: ['http://example.com', 'http://localhost:5173'], // specify allowed origins
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true, // allow cookies or other credentials
+    allowedHeaders: 'Content-Type, Authorization',
+  });
+
   await app.listen(3000);
 }
 bootstrap();

@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
-import { LoginDto } from './dto/login.dto';
+import { LoginDto, LoginAppGoogleDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -24,7 +24,7 @@ import { GoogleAuthGuard } from 'src/guards/google-auth.guard.ts/google-auth.gua
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
-  @Post('signup')
+  @Post('sign-up')
   signUp(@Body() createUserDto: CreateUserDto) {
     return this.authService.signUp(createUserDto);
   }
@@ -47,11 +47,17 @@ export class AuthController {
   @UseGuards(GoogleAuthGuard)
   @Get('google/callback')
   async googleCallBack(@Req() req, @Res() res) {
-    const { accessToken } = await this.authService.generateUserToken(
-      req?.user?._id,
+    const { accessToken, refreshToken } =
+      await this.authService.generateUserToken(req?.user?._id);
+    return res.redirect(
+      `http://localhost:5173/?token=${accessToken}&refreshToken=${refreshToken}`,
     );
-    return res.redirect(`http://localhost:4000/token=${accessToken}`);
   }
+  @Post('google/app')
+  async googleAppLogin(@Body() loginAppGoogleDto: LoginAppGoogleDto) {
+    return this.authService.getUserGoogleInfo(loginAppGoogleDto.token);
+  }
+
   @UseGuards(AuthGuard)
   @Post('refresh-token')
   refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {

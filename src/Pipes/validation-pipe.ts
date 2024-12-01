@@ -34,8 +34,6 @@ export class ValidateNonEmptyBodyPipe implements PipeTransform {
       (field) => !allowedFields.includes(field),
     );
 
-    console.log(metadata);
-
     if (extraFields.length > 0) {
       throw new BadRequestException(
         `Unexpected fields: ${extraFields.join(', ')}. Allowed fields are: ${allowedFields.join(', ')}`,

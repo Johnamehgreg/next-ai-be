@@ -22,3 +22,9 @@ export class LoginDto {
   })
   password: string;
 }
+export class LoginAppGoogleDto {
+  static allowedFields = ['token'];
+  @IsString()
+  @IsNotEmpty()
+  token: string;
+}

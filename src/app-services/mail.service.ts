@@ -5,12 +5,15 @@ import { Injectable } from '@nestjs/common';
 export class MailService {
   constructor(private readonly mailService: MailerService) { }
   async sendPasswordResetEmail(to: string, token: string) {
-    const resetLink = `http://localhost:3000/${token}`;
+    const resetLink = `http://localhost:5173/login?resetToken=${token}`;
     const mailOptions = {
       from: 'Kingsley Okure <kingsleyokgeorge@gmail.com>',
       to,
       subject: 'Password Reset',
-      text: `To reset your password, please click on the following link: ${resetLink}`,
+      html: `
+      <p>To reset your password, please click on the following link:</p>
+      <a href="${resetLink}" target="_blank">Reset Password</a>
+    `,
     };
     this.mailService.sendMail(mailOptions);
   }

@@ -207,10 +207,7 @@ export class AuthService {
     }
 
     await this.mailService.sendPasswordResetEmail(user.email, resetToken);
-    throw new HttpException(
-      `If email exit an reset link has been sent ${resetToken} `,
-      200,
-    );
+    throw new HttpException(`If email exit an reset link has been sent`, 200);
   }
 
   async resetPassword(resetPasswordDto: ResetPasswordDto) {

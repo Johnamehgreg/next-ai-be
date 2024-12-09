@@ -214,7 +214,7 @@ export class AuthService {
     const resetTokenData = await this.ResetTokenModel.findOneAndDelete({
       token: resetPasswordDto.resetToken,
     });
-    if (!resetTokenData) throw new UnauthorizedException('Invalid link');
+    if (!resetTokenData) throw new UnauthorizedException('Invalid token');
     const hashedPassword = await this.generateHashedPassword(
       resetPasswordDto.newPassword,
     );
